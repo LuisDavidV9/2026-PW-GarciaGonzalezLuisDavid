@@ -127,50 +127,52 @@ formArreglos.addEventListener("submit", (evento) => {
 
 //segunda parte
 
-const formObjeto = document.getElementById('form-objeto');
-const resultadoObjeto = document.getElementById('resultado-objeto');
+const formObjeto = document.getElementById("form-objeto");
+const resultadoObjeto = document.getElementById("resultado-objeto");
 
-formObjeto.addEventListener('submit',(evento) => {
-    evento.preventDefault();
+formObjeto.addEventListener("submit", (evento) => {
+  evento.preventDefault();
 
-    //Construimos el objeto de talleres
-    const taller = {
-      nombre: document.getElementById('obj-nombre').value,
-      instructor: document.getElementById('obj-instructor').value,
-      cupo: Number(document.getElementById('obj-cupo').value),
-      inscritos:  Number(document.getElementById('obj-inscritos').value)
-    };
+  //Construimos el objeto de talleres
+  const taller = {
+    nombre: document.getElementById("obj-nombre").value,
+    instructor: document.getElementById("obj-instructor").value,
+    cupo: Number(document.getElementById("obj-cupo").value),
+    inscritos: Number(document.getElementById("obj-inscritos").value),
+  };
 
-    const operacion = document.getElementById('operacion-objeto').value;
+  const operacion = document.getElementById("operacion-objeto").value;
 
-    let resultado; 
+  let resultado;
 
-    switch(operacion){
-        case 'keys':
-          resultado = JSON.stringify(Object.keys(taller));
-          break;
-        case 'values':
-          break;
-        case 'entries':
+  switch (operacion) {
+    case "keys":
+      resultado = JSON.stringify(Object.keys(taller));
+      break;
+    case "values":
+      resultado = JSON.stringify(Object.values(taller));
+      break;
+    case "entries":
+      resultado = Object.entries(taller)
+        .map(([campo, valor]) => `${campo}: ${valor}`)
+        .join("\n");
+      break;
+    case "stringify":
+      resultado = JSON.stringify(taller, null, 2);
+      break;
+    case "roundtrip":
+      const textoJSON = JSON.stringify(taller, null, 2);
+      const objetoDeVuelta = JSON.parse(textoJSON);
 
-          resultado = Object.entries(taller).map(([campo,valor]) => `${campo}: ${valor}`).join('\n');
-          break;
-        case 'stringify':
-          break;
-        case 'roundtrip' :
-          
-        const textoJSON = JSON.stringify(taller, null, 2);
-        const objetoDeVuelta = JSON.parse(textoJSON);
+      resultado = [
+        "",
+        textoJSON,
+        "",
+        `tipo: ${typeof objetoDeVuelta}`,
+        objetoDeVuelta.nombre,
+      ].join("\n");
+      break;
+  }
 
-        resultado = [
-            '',
-            textoJSON,
-            '',
-            `tipo: ${typeof objetoDeVuelta}`,
-            objetoDeVuelta.nombre
-        ].join('\n');
-          break;
-    }
-
-    resultadoObjeto.textContent = resultado;
-})
+  resultadoObjeto.textContent = resultado;
+});

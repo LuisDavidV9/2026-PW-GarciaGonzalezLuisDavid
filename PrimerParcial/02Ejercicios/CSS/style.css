@@ -63,11 +63,22 @@ button {
   color: white;
   font-size: 16px;
   cursor: pointer;
-  margin: top 15px;
+  margin-top: 15px;
 }
 
 button:hover {
   background-color: #1e40af;
+}
+#resultado-arreglo {
+  display: block;
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #f1f5f9;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  color: #1f1f1f;
+  font-size: 16px;
+  white-space: pre-wrap;
 }
 nav {
   background-color: #1f2937;
@@ -84,4 +95,51 @@ nav a {
 nav a:hover {
   color: #93c5fd;
   text-decoration: underline;
+}
+
+.campo {
+  margin-bottom: 15px;
+}
+
+.campo label {
+  display: inline-block;
+  width: 150px;
+  font-weight: bold;
+}
+
+.campo input {
+  padding: 8px;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  font-size: 16px;
+}
+.campo select {
+  padding: 8px;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+#resultado-objeto {
+  display: block;
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #f1f5f9;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  color: #1f1f1f;
+  font-size: 16px;
+  white-space: pre-wrap;
+}
+
+.gatitos_cumbieros {
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.gatitos_cumbieros video {
+  width: 500px;
+  max-width: 100%;
+  border-radius: 10px;
 }
