@@ -1,16 +1,15 @@
-// vamos a dejarles 2 de las 3 funciones para validar 
-
-function validarCorreo(){
-
+function validarCorreo(correo) {
+    if (typeof correo !== 'string') return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
 }
 
-function validarBoleta(){
-
+function validarBoleta(boleta) {
+    return /^\d{10}$/.test(String(boleta));
 }
 
-function validarContrasena(){
+function validarContrasena(contrasena) {
     if (typeof contrasena !== 'string') return false;
     return contrasena.length >= 8;
 }
 
-module.exports = {validarBoleta, validarContrasena, validarCorreo}
+module.exports = { validarBoleta, validarContrasena, validarCorreo };
