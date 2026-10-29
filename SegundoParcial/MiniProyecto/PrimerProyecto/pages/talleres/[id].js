@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { pedirJSON } from "../../lib/api";
 import { formatearFecha, ocultarBoleta } from "../../lib/formato";
-import { validarBoleta } from "../../lib/validaciones";
+import { validarBoleta, validarNombre } from "../../lib/validaciones";
 import estilos from "../../styles/Talleres.module.css";
 
 // /talleres/[id] — detalle de un taller.
@@ -33,6 +33,10 @@ export default function DetalleTaller() {
     const nombreLimpio = nombre.trim();
     const boletaLimpia = boleta.trim();
     if (!nombreLimpio) return setErrorForm("Escribe tu nombre.");
+    if (!validarNombre(nombreLimpio))
+      return setErrorForm(
+        "El nombre solo puede tener letras y espacios (de 3 a 100 caracteres).",
+      );
     if (!validarBoleta(boletaLimpia))
       return setErrorForm("La boleta debe tener 10 dígitos.");
     if (asistencias.some((a) => a.boleta === boletaLimpia))

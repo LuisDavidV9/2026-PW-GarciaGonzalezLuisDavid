@@ -1,95 +1,149 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
 
-const usuariosModel = require('../Modelo/usuario_modelo');
+const usuariosModel = require("../Modelo/usuario_modelo");
 
-const { validarCorreo, validarBoleta, validarContrasena } = require('../validaciones');
+const {
+  validarCorreo,
+  validarBoleta,
+  validarContrasena,
+  validarNombre,
+} = require("../validaciones");
 
 function esDuplicado(error) {
-    return error.code === 'ER_DUP_ENTRY' || error.code === '23505';
+  return error.code === "ER_DUP_ENTRY" || error.code === "23505";
 }
 
 // GET /api/usuarios
 async function listarUsuarios(req, res) {
-    try {
-        const usuarios = await usuariosModel.listar();
-        res.json(usuarios);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const usuarios = await usuariosModel.listar();
+    res.json(usuarios);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
 // GET /api/usuarios/:id
 async function obtenerUsuario(req, res) {
-    try {
-        const usuario = await usuariosModel.obtenerPorId(req.params.id);
-        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-        res.json(usuario);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const usuario = await usuariosModel.obtenerPorId(req.params.id);
+    if (!usuario)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    res.json(usuario);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
 // POST /api/usuarios
 async function crearUsuario(req, res) {
-    const { nombre, correo, contrasena, boleta, rol } = req.body || {};
+  const { nombre, correo, contrasena, boleta, rol } = req.body || {};
 
-    if (!nombre || !correo || !contrasena || !boleta) {
-        return res.status(400).json({ error: 'nombre, correo, contrasena y boleta son obligatorios' });
-    }
-    if (!validarCorreo(correo)) {
-        return res.status(400).json({ error: 'El correo no tiene un formato válido' });
-    }
-    if (!validarBoleta(boleta)) {
-        return res.status(400).json({ error: 'La boleta debe tener 10 dígitos' });
-    }
-    if (!validarContrasena(contrasena)) {
-        return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
-    }
+  if (!nombre || !correo || !contrasena || !boleta) {
+    return res
+      .status(400)
+      .json({ error: "nombre, correo, contrasena y boleta son obligatorios" });
+  }
+  if (!validarNombre(nombre)) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "El nombre solo puede tener letras y espacios (de 3 a 100 caracteres)",
+      });
+  }
+  if (!validarCorreo(correo)) {
+    return res
+      .status(400)
+      .json({ error: "El correo no tiene un formato válido" });
+  }
+  if (!validarBoleta(boleta)) {
+    return res.status(400).json({ error: "La boleta debe tener 10 dígitos" });
+  }
+  if (!validarContrasena(contrasena)) {
+    return res
+      .status(400)
+      .json({ error: "La contraseña debe tener al menos 8 caracteres" });
+  }
 
-    try {
-        const contrasenaHash = await bcrypt.hash(contrasena, 10);
-        const usuario = await usuariosModel.crear({ nombre, correo, contrasenaHash, boleta, rol });
-        res.status(201).json(usuario);
-    } catch (error) {
-        if (esDuplicado(error)) {
-            return res.status(409).json({ error: 'Ya existe un usuario con ese correo o boleta' });
-        }
-        res.status(500).json({ error: error.message });
+  try {
+    const contrasenaHash = await bcrypt.hash(contrasena, 10);
+    const usuario = await usuariosModel.crear({
+      nombre: nombre.trim(),
+      correo,
+      contrasenaHash,
+      boleta: String(boleta),
+      rol,
+    });
+    res.status(201).json(usuario);
+  } catch (error) {
+    if (esDuplicado(error)) {
+      return res
+        .status(409)
+        .json({ error: "Ya existe un usuario con ese correo o boleta" });
     }
+    res.status(500).json({ error: error.message });
+  }
 }
 
 // PUT /api/usuarios/:id
 async function actualizarUsuario(req, res) {
-    const { nombre, correo, rol } = req.body || {};
+  const { nombre, correo, rol } = req.body || {};
 
-    if (nombre === undefined && correo === undefined && rol === undefined) {
-        return res.status(400).json({ error: 'Envía al menos uno de: nombre, correo, rol' });
-    }
-    if (correo !== undefined && !validarCorreo(correo)) {
-        return res.status(400).json({ error: 'El correo no tiene un formato válido' });
-    }
+  if (nombre === undefined && correo === undefined && rol === undefined) {
+    return res
+      .status(400)
+      .json({ error: "Envía al menos uno de: nombre, correo, rol" });
+  }
+  if (nombre !== undefined && !validarNombre(nombre)) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "El nombre solo puede tener letras y espacios (de 3 a 100 caracteres)",
+      });
+  }
+  if (correo !== undefined && !validarCorreo(correo)) {
+    return res
+      .status(400)
+      .json({ error: "El correo no tiene un formato válido" });
+  }
 
-    try {
-        const usuario = await usuariosModel.actualizar(req.params.id, { nombre, correo, rol });
-        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-        res.json(usuario);
-    } catch (error) {
-        if (esDuplicado(error)) {
-            return res.status(409).json({ error: 'Ya existe un usuario con ese correo' });
-        }
-        res.status(500).json({ error: error.message });
+  try {
+    const usuario = await usuariosModel.actualizar(req.params.id, {
+      nombre: nombre !== undefined ? nombre.trim() : undefined,
+      correo,
+      rol,
+    });
+    if (!usuario)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    res.json(usuario);
+  } catch (error) {
+    if (esDuplicado(error)) {
+      return res
+        .status(409)
+        .json({ error: "Ya existe un usuario con ese correo" });
     }
+    res.status(500).json({ error: error.message });
+  }
 }
 
 // DELETE /api/usuarios/:id
 async function eliminarUsuario(req, res) {
-    try {
-        const eliminado = await usuariosModel.eliminar(req.params.id);
-        if (!eliminado) return res.status(404).json({ error: 'Usuario no encontrado' });
-        res.status(204).send();
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const eliminado = await usuariosModel.eliminar(req.params.id);
+    if (!eliminado)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }
 
-module.exports = { listarUsuarios, obtenerUsuario, crearUsuario, actualizarUsuario, eliminarUsuario };
+module.exports = {
+  listarUsuarios,
+  obtenerUsuario,
+  crearUsuario,
+  actualizarUsuario,
+  eliminarUsuario,
+};
