@@ -3,6 +3,7 @@ const express = require("express");
 const talleres = require("./Controlador/controlador_talleres");
 const asistencias = require("./Controlador/asistencia_controlador");
 const usuarios = require("./Controlador/usuario_controlador");
+const asistenciaModelo = require("./Modelo/asistencia_modelo");
 
 const app = express();
 
@@ -42,6 +43,11 @@ app.post("/api/talleres", talleres.crearTaller);
 
 // Asistencias
 app.post("/api/asistencias", asistencias.registrarAsistencia);
+app.get(
+  "/api/asistencias/boleta/:boleta",
+  asistencias.consultarAsistenciaPorBoleta,
+);
+app.patch("/api/asistencias/:id", asistencias.marcarAsistencia);
 
 // Usuarios (CRUD)
 app.get("/api/usuarios", usuarios.listarUsuarios);
@@ -50,6 +56,14 @@ app.post("/api/usuarios", usuarios.crearUsuario);
 app.put("/api/usuarios/:id", usuarios.actualizarUsuario);
 app.delete("/api/usuarios/:id", usuarios.eliminarUsuario);
 
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto: ${PORT}`);
-});
+// Antes de aceptar peticiones, la tabla asistencias debe tener la columna "asistio".
+asistenciaModelo
+  .prepararTabla()
+  .catch((error) => {
+    console.error("No se pudo preparar la tabla asistencias:", error.message);
+  })
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`Servidor escuchando en el puerto: ${PORT}`);
+    });
+  });
