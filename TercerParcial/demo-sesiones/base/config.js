@@ -4,7 +4,7 @@ module.exports = {
   // Dónde guarda el servidor las sesiones:
   //  'mysql'   → en la tabla sessions de tu base de datos (sobreviven a un reinicio).
   //  'memoria' → en la memoria del servidor (se pierden al reiniciar).
-  almacen: 'mysql',
+  almacen: "mysql",
 
   // Cuánto dura la sesión, en milisegundos. 10 minutos = 10 * 60 * 1000
   maxAgeMs: 10 * 60 * 1000,
@@ -17,7 +17,7 @@ module.exports = {
   httpOnly: true,
 
   // 'lax': la cookie no viaja en peticiones POST que vienen de otros sitios. 'strict' es más estricto.
-  sameSite: 'lax',
+  sameSite: "lax",
 
   // true: al iniciar sesión el servidor cambia el id de la sesión (protege contra la fijación de sesión).
   regenerarAlEntrar: true,
