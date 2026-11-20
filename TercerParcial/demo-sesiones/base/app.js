@@ -5,6 +5,9 @@ const express = require("express");
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
 const { crearModeloUsuarios } = require("./modelos/usuarios.modelo");
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const { crearModeloTokens } = require('./modelos/tokens.modelo');
 
 const NOMBRE_COOKIE = "connect.sid";
 
@@ -218,7 +221,110 @@ function crearApp(config, pool) {
     res.status(404).json({ error: "Ruta no encontrada" }),
   );
 
+  // implementacion de jwt
+
+  const SECRETO_JWT = config.jwtSecreto || process.env.JWT_SECRET || 'secreto-jwt-solo-para-esta-demo';
+
+  //vamos a crear una funcion para poder verificar y firmar que el token sea autentico y sino a volar 
+  function firmarToken(usuario){
+    return  jwt.sign(
+      {
+        sub : String(usuario.id), usuario : usuario.usuario,
+        nombre : usuario.nombre, rol: usuario.rol
+      }, SECRETO_JWT,
+      {
+        algorithm : 'HS256' , expiresIn:
+        config.jwtExpiraSeg, jwtid : crypto.randomUUID()
+      }
+    );
+  }
+
+  //tenemos que hacer una funcion que se encargue de validar a quien necesita o no un token dentro de la aplicación entre el middleware
+  async function requiereJWT(req, res, next) {
+    const encabezado = req.headers.authorization || '';
+    if(!encabezado.startWith('Bearer ')){
+      return res.status(401).json({error : 'Falta un token asociado'});
+    }
+    const token = encabezado.slice('Bearer ' .length);
+
+    let datos;
+    try {
+      datos = jwt.verify(token, SECRETO_JWT, {algorithms : ['HS256']});
+    }catch(error){
+      if(error === 'TokenExpiredError'){
+        return res.status(401).json({error: '401 Token expirado, por favor renuevele'});
+      }
+      return res.status(401).json({error: '401 Token Invalido'});
+    }
+
+    try {
+      if(config.jwtRevocar && (await
+        tokens.estaRevocado(datos.jti))){
+          return res.status(401).json({error: 'Token revocado'});
+        } 
+    }catch(error){
+      return next(error);
+    }
+    req.jwt = datos;
+    next();
+
+  }
+
+  //403 el token es valido pero no el rol
+  function requieroRolJWT(rol){
+    return (req, res, next)=>{
+      if(req.jwt.rol !== rol){
+        return res.status(403).json({error: `Eres ${req.jwt.usuario} pero esta ruta solo accede ${rol}`});
+      }
+      next();
+    };
+  }
+  
+  app.post('/api/jwt/login', async(req,res,next)=>{
+    try{
+      const {usuario,contrasena} = req.body || {};
+      const datos = await usuarios.verificar(usuario,contrasena);
+      if(!datos) return res.status(401).json({error: 'Usuario o contraseña incorrectos'});
+      res.json({token: firmarToken(datos), usuario : datos});
+    }catch(error){
+      next(error);
+    }
+  });
+
+  app.get('/api/jwt/perfil', requiereJWT, (req, res)=>{
+    res.json({
+      mensaje : `Hola ${req.jwt.nombre}`,
+      rol : req.jwt.rol,
+      expiraEnSegundos: Math.max(0, req.jwt.exp - Math.floor(Date.now() / 1000)),
+    });
+  });
+
+  //ruta para admin
+  app.get('/api/jwt/admin/reporte', requiereJWT,
+    requiereRol('admin'), (req, res) =>{
+      res.json({reporte: 'Talleres: 3'});
+    
+  });
+
+  app.post('/api/jwt/refresh', requiereJWT, (req, res)=>{
+    const {sub, usuario, nombre, rol } = req.jwtM
+    res.json({token: firmarToken({id: sub, usuario, nombre,rol})});
+  });
+
+  app.post('/api/jwt/logout', requiereJWT, async(req, res, next)=>{
+    try{
+      if(config.jwtRevocar){
+        await tokens.revocar(req.jwt.jti, req.jwt.usuario, req.jwt.exp);
+        return res.json({mensaje : 'Token revocado en el servidor, se registra en la lista negra'});
+      }
+      res.json({mensaje: 'El servidor no guarda nada'});
+    }catch(error){
+      next(error);
+    }
+  });
+  
   return app;
+
 }
 
 module.exports = { crearApp, NOMBRE_COOKIE };
